@@ -14,13 +14,14 @@ import matplotlib.style as style
 #import cartopy.crs as ccrs
 
 
+# read covid-19 dataset
+data = pd.read_csv("..\\covid-19-data\\time-series-19-covid-combined.csv")
 
-data = pd.read_csv("..\\data\\time-series-19-covid-combined.csv")
-
+# find most recent date
 recent_date = data['Date'].max()
-
 recent_data_bool = data['Date'] == recent_date
 
+# data only from most recent date
 latest_data = data[recent_data_bool]
 
 # number of total cases as of latest date in data
@@ -124,23 +125,74 @@ def plot_all(data):
 #style.use('default')
 #
 ## Number of cases per country
-#fig = plt.figure()
-#ax = plt.gca()
-#country_data = data.groupby(['Country/Region']).sum().sort_values(by='Confirmed')
-#country_data.plot.bar(y='Confirmed', log=True, ax=ax, alpha = 0.5, edgecolor='k')
-#country_data[['Deaths', 'Recovered']].plot.bar(stacked=True, log=True, ax=ax,
-#            color=['r', 'limegreen'], alpha = 0.5, edgecolor='k')
-#plt.xlabel('Country')
-#plt.ylabel('Number of Cases')
+fig = plt.figure()
+ax = plt.gca()
+country_data = data.groupby(['Country/Region']).sum().sort_values(by='Confirmed').reset_index()
+country_data.plot.bar(y='Confirmed', log=True, ax=ax, alpha = 0.5, edgecolor='k')
+country_data[['Deaths', 'Recovered']].plot.bar(stacked=True, log=True, ax=ax,
+            color=['r', 'limegreen'], alpha = 0.5, edgecolor='k')
+plt.xlabel('Country')
+plt.ylabel('Number of Cases')
+ax.set_xticklabels(country_data['Country/Region'])
+plt.show()
+
+
+
+
+
+
+
+#ax = plt.axes(projection=ccrs.PlateCarree())
+#ax.coastlines()
+#
 #plt.show()
 
 
+# set max number of rows displayed
+pd.set_option('display.max_rows', 10)
+    
+
+# read population dataset
+pop = pd.read_csv("..\\population-data\\population-figures-by-country.csv")
+
+# Latest year's population
+pop_16 = pop[['Country', 'Year_2016']]
+#print(data.groupby(['Country/Region']).sum())
 
 
 
 
+#population_covid_countries = population_data_2016
+cov_countries_drop_dup = data['Country/Region'].drop_duplicates()
+countries = list(cov_countries_drop_dup[cov_countries_drop_dup.isin(pop_16['Country'])])
 
-ax = plt.axes(projection=ccrs.PlateCarree())
-ax.coastlines()
+# population data for only countries with cov data
+pop_cov_countries = pop_16[pop_16['Country'].isin(countries)]
+
+# cov data for only countries with population data
+cov_pop_countries = country_data[country_data['Country/Region'].isin(countries)]
+
+#rel_cov = cov_pop_df['Confirmed'] / cov_pop_df['Population']
+
+
+# Add population column to data
+cov_pop_df = cov_pop_countries.sort_values('Country/Region').join(pd.DataFrame({'Population': np.array(pop_cov_countries['Year_2016'])}))
+
+# Sort cov_pop_df by Confirmed
+cov_pop_df = cov_pop_df.sort_values(by='Confirmed')
+
+cov_pop_df['Confirmed Relative'] = cov_pop_df['Confirmed'] / cov_pop_df['Population']
+cov_pop_df['Recovered Relative'] = cov_pop_df['Recovered'] / cov_pop_df['Population']
+cov_pop_df['Deaths Relative'] = cov_pop_df['Deaths'] / cov_pop_df['Population']
+
+# plot relative cov rates per country
+fig = plt.figure()
+ax = plt.gca()
+cov_pop_df.plot.bar(y='Confirmed Relative', log=True, ax=ax, alpha = 0.5, edgecolor='k')
+cov_pop_df[['Deaths Relative', 'Recovered Relative']].plot.bar(stacked=True, log=True, ax=ax,
+            color=['r', 'limegreen'], alpha = 0.5, edgecolor='k')
+plt.xlabel('Country')
+plt.ylabel('Number of Cases')
+ax.set_xticklabels(country_data['Country/Region'])
 
 plt.show()
