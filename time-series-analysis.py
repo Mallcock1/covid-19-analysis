@@ -22,11 +22,11 @@ fit_curve = False
 make_country_bar = False
 make_country_bar_log = False
 
-make_map_image = True
-make_map_animation = True
-#make_country_ts = True
+#make_map_image = True
+#make_map_animation = True
+make_country_ts = True
 #make_global_ts = True
-#fit_curve = True
+fit_curve = True
 #make_country_bar = True
 #make_country_bar_log = True
 
@@ -89,7 +89,7 @@ fig_path = '..\\figures\\'
 
 if make_country_ts:
     # Plot time-series for a given country
-    country = 'United Kingdom'
+    country = 'China'
     plt.figure()
     ax1 = plt.gca()
     
@@ -100,16 +100,16 @@ if make_country_ts:
             return y
         
         # initial guess parameters
-#        p0 = [50000, 20, 10]
-        p0 = [3000, 30, 1]
-        bounds = ([100, 10, 0.01], [10000, 100, 100])
+        p0 = [50000, 20, 10]
+#        p0 = [3000, 30, 1]
+#        bounds = ([100, 10, 0.01], [10000, 100, 100])
         
         # Country time_series
         data = con_df_time_only.loc[con_df['Country/Region'] == country].transpose()
 
         # Fit curve
         popt, pcov = curve_fit(logistic, np.arange(len(data)), data.iloc[:,0], 
-                               p0, bounds=bounds)
+                               p0)#, bounds=bounds)
         
         # logistic function with optimised parameters
         def logistic_optimised(x):
